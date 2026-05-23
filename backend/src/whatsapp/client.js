@@ -7,7 +7,7 @@ let isInitializing = false;
 let latestQr = null;
 
 /**
- * Boot the WhatsApp Web client
+ * Boot WhatsApp
  */
 const initWhatsApp = async () => {
   if (isInitializing || whatsappClient) return;
@@ -15,16 +15,15 @@ const initWhatsApp = async () => {
   isInitializing = true;
 
   try {
-    const { Client, LocalAuth } = require('whatsapp-web.js');
-
-    // IMPORTANT FOR RENDER
-    const executablePath =
-      process.env.PUPPETEER_EXECUTABLE_PATH ||
-      process.env.CHROME_BIN ||
-      undefined;
-
     console.log('🚀 Starting WhatsApp...');
-    console.log('📍 Chrome path:', executablePath || 'Bundled Chromium');
+
+    const { Client, LocalAuth } = require('whatsapp-web.js');
+    const puppeteer = require('puppeteer');
+
+    // AUTO DETECT CHROME PATH
+    const browserPath = puppeteer.executablePath();
+
+    console.log('📍 Chrome path:', browserPath);
 
     const client = new Client({
       authStrategy: new LocalAuth({
@@ -33,8 +32,7 @@ const initWhatsApp = async () => {
 
       puppeteer: {
         headless: true,
-
-        executablePath,
+        executablePath: browserPath,
 
         args: [
           '--no-sandbox',
@@ -44,14 +42,14 @@ const initWhatsApp = async () => {
           '--no-first-run',
           '--no-zygote',
           '--disable-gpu',
-          '--single-process',
         ],
       },
     });
 
     // ─────────────────────────────────────────────
-    // QR EVENT
+    // EVENTS
     // ─────────────────────────────────────────────
+
     client.on('qr', (qr) => {
       latestQr = qr;
 
@@ -66,18 +64,11 @@ const initWhatsApp = async () => {
       console.log('\n⏳ Waiting for QR scan...\n');
     });
 
-    // ─────────────────────────────────────────────
-    // AUTHENTICATED
-    // ─────────────────────────────────────────────
     client.on('authenticated', () => {
       latestQr = null;
-
       console.log('🔐 WhatsApp authenticated!');
     });
 
-    // ─────────────────────────────────────────────
-    // READY
-    // ─────────────────────────────────────────────
     client.on('ready', () => {
       isReady = true;
       latestQr = null;
@@ -85,16 +76,10 @@ const initWhatsApp = async () => {
       console.log('✅ WhatsApp client is READY!');
     });
 
-    // ─────────────────────────────────────────────
-    // LOADING
-    // ─────────────────────────────────────────────
     client.on('loading_screen', (percent, message) => {
       console.log(`⏳ ${percent}% - ${message}`);
     });
 
-    // ─────────────────────────────────────────────
-    // AUTH FAILURE
-    // ─────────────────────────────────────────────
     client.on('auth_failure', (msg) => {
       isReady = false;
 
@@ -106,9 +91,6 @@ const initWhatsApp = async () => {
       setTimeout(initWhatsApp, 30000);
     });
 
-    // ─────────────────────────────────────────────
-    // DISCONNECTED
-    // ─────────────────────────────────────────────
     client.on('disconnected', (reason) => {
       isReady = false;
 
@@ -120,11 +102,9 @@ const initWhatsApp = async () => {
       setTimeout(initWhatsApp, 10000);
     });
 
-    // SAVE CLIENT
-    whatsappClient = client;
-
-    // INITIALIZE
     await client.initialize();
+
+    whatsappClient = client;
 
   } catch (err) {
     console.error('❌ WhatsApp init error:', err);
@@ -147,20 +127,16 @@ const sendMessage = async (phone, message) => {
   }
 
   try {
-    const cleanPhone = phone.replace(/\D/g, '');
-
-    const numberId = await whatsappClient.getNumberId(cleanPhone);
+    const numberId = await whatsappClient.getNumberId(phone);
 
     const chatId = numberId
       ? numberId._serialized
-      : `${cleanPhone}@c.us`;
+      : `${phone}@c.us`;
 
     await whatsappClient.sendMessage(chatId, message);
 
-    console.log(`✅ Message sent to ${cleanPhone}`);
-
   } catch (err) {
-    console.error(`❌ Send error for ${phone}:`, err);
+    console.error(`Send error for ${phone}:`, err);
 
     throw new Error(err.message || 'Failed to send message');
   }
@@ -176,9 +152,6 @@ const getStatus = () => ({
   isDisabled: false,
 });
 
-/**
- * Get QR
- */
 const getLatestQr = () => latestQr;
 
 module.exports = {
