@@ -29,7 +29,7 @@ const initWhatsApp = () => {
     '--no-first-run',
     '--no-zygote',
     '--disable-gpu',
-    '--single-process',
+    '--disable-features=site-per-process',
   ];
 
   const puppeteerOpts = {
