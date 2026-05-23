@@ -77,7 +77,11 @@ app.use((err, _req, res, _next) => {
   // ─── Init database (async WASM load) ──────────────────────────────────────
   console.log('⏳ Initializing database...');
   await initDatabase();
-  console.log('✅ Database ready.\n');
+
+console.log('🌱 Running student seed...');
+require('./src/db/seed');
+
+console.log('✅ Database ready.\n');
 
   // ─── Start server ─────────────────────────────────────────────────────────
   app.listen(PORT, () => {
