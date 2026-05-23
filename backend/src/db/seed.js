@@ -14,8 +14,8 @@ const isFresh = process.argv.includes('--fresh');
 
 // ─── Async main ───────────────────────────────────────────────────────────────
 (async () => {
-  const { db, initDatabase } = require('./database');
-  await initDatabase();
+const { initDatabase }  = require('./src/db/database');
+require('./src/db/seed');
 
   console.log('\n🌱 Starting database seed...\n');
 
