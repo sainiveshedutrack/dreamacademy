@@ -122,7 +122,7 @@ const historyTableHTML = (records) => {
       <td>${r.student_grade}</td>
       <td>${statusBadge(r.status)}</td>
       <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.class_taken}">${r.class_taken}</td>
-      <td style="font-size:.8rem">${r.whatsapp_sent ? '📱 Sent' : '⚠️ Not sent'}</td>
+      <td style="font-size:.8rem" title="${r.whatsapp_error ? r.whatsapp_error.replace(/"/g, '&quot;') : ''}">${r.whatsapp_sent ? '📱 Sent' : '⚠️ Not sent'}</td>
       <td style="font-size:.8rem;color:var(--text-2)">${r.teacher_name || '—'}</td>
     </tr>
   `).join('');

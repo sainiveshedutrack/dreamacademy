@@ -120,14 +120,17 @@ const sendMessage = async (phone, message) => {
     throw new Error('WhatsApp client not ready. Please scan the QR code first.');
   }
 
-  // Use getNumberId() to resolve the correct chat ID and avoid "No LID for user" errors
-  const numberId = await whatsappClient.getNumberId(phone);
-  if (!numberId) {
-    throw new Error(`Phone number ${phone} is not registered on WhatsApp.`);
+  try {
+    // Use getNumberId() to resolve the correct chat ID, but fallback to @c.us if it fails
+    // getNumberId can sometimes return null for valid numbers due to WA synchronization issues
+    const numberId = await whatsappClient.getNumberId(phone);
+    const chatId = numberId ? numberId._serialized : `${phone}@c.us`;
+    
+    await whatsappClient.sendMessage(chatId, message);
+  } catch (err) {
+    console.error(`WhatsApp send error for ${phone}:`, err);
+    throw new Error(`Failed to send: ${err.message || 'Unknown error'}`);
   }
-
-  const chatId = numberId._serialized;
-  await whatsappClient.sendMessage(chatId, message);
 };
 
 /**
