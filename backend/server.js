@@ -98,10 +98,13 @@ app.use((err, _req, res, _next) => {
     console.log('   GET  /api/attendance/history');
     console.log('   GET  /api/attendance/student/:id');
     console.log('   GET  /api/whatsapp/status');
-    console.log('\n📱 Booting WhatsApp client...\n');
-
-    // Boot WhatsApp — QR code will appear in this terminal
-    initWhatsApp();
+    if (process.env.WHATSAPP_ENABLED === 'true') {
+      console.log('\n📱 Booting WhatsApp client...\n');
+      // Boot WhatsApp — QR code will appear in this terminal
+      initWhatsApp();
+    } else {
+      console.log('\n📱 WhatsApp client disabled (set WHATSAPP_ENABLED=true to enable)\n');
+    }
   });
 
 })().catch((err) => {

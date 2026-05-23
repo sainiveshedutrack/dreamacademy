@@ -2,7 +2,14 @@ services:
   - type: web
     name: edutrack-backend
     runtime: node
-    buildCommand: npm install && npm run seed
+    buildCommand: |
+      npm install
+      # Build frontend so backend can serve static assets
+      cd ../frontend || exit 0
+      npm install
+      npm run build
+      cd ../backend || exit 0
+      npm run seed
     startCommand: node server.js
     envVars:
       - key: PORT
