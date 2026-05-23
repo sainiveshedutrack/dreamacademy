@@ -223,6 +223,31 @@ const initDatabase = async () => {
     `);
   } catch (_) {}
 
+  // Auto-seed default teachers if none exist (ensures credentials on fresh deploys)
+  try {
+    const countRes = _db.exec("SELECT COUNT(*) as c FROM teachers");
+    const teachersCount = (countRes[0] && countRes[0].values && countRes[0].values[0] && countRes[0].values[0][0]) || 0;
+    if (Number(teachersCount) === 0) {
+      console.log('🌱 No teachers found — inserting default demo accounts');
+      const bcrypt = require('bcryptjs');
+      const TEACHERS = [
+        { name: 'Tamil',     email: 'tamil@dream.com',     password: 'teacher123', role: 'staff' },
+        { name: 'Abiram',    email: 'abiram@dream.com',    password: 'teacher123', role: 'staff' },
+        { name: 'Harris',    email: 'harris@dream.com',    password: 'teacher123', role: 'staff' },
+        { name: 'Sandeep',   email: 'sandeep@dream.com',   password: 'teacher123', role: 'staff' },
+        { name: 'Srikanth',  email: 'srikanth@dream.com',  password: 'teacher123', role: 'superadmin' },
+        { name: 'Dharshini', email: 'dharshini@dream.com', password: 'teacher123', role: 'staff' },
+      ];
+      for (const t of TEACHERS) {
+        const emailNorm = t.email.toLowerCase().trim();
+        const hash = bcrypt.hashSync(t.password, 10);
+        _db.run('INSERT INTO teachers (name, email, password_hash, role) VALUES (?,?,?,?)', [t.name, emailNorm, hash, t.role]);
+      }
+      save();
+      console.log('✅ Default teachers seeded.');
+    }
+  } catch (err) { console.warn('Seeding check failed:', err); }
+
   save();
   return db;
 };
