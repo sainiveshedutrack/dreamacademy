@@ -6,9 +6,6 @@ let isReady = false;
 let isInitializing = false;
 let latestQr = null;
 
-/**
- * Boot WhatsApp
- */
 const initWhatsApp = async () => {
   if (isInitializing || whatsappClient) return;
 
@@ -18,12 +15,17 @@ const initWhatsApp = async () => {
     console.log('🚀 Starting WhatsApp...');
 
     const { Client, LocalAuth } = require('whatsapp-web.js');
-    const puppeteer = require('puppeteer');
 
-    // AUTO DETECT CHROME PATH
-    const browserPath = puppeteer.executablePath();
+    // AUTO DETECT CHROME
+    let executablePath;
 
-    console.log('📍 Chrome path:', browserPath);
+    try {
+      executablePath = require('puppeteer').executablePath();
+
+      console.log('📍 Chrome detected at:', executablePath);
+    } catch (err) {
+      console.log('⚠️ Puppeteer Chrome auto-detect failed');
+    }
 
     const client = new Client({
       authStrategy: new LocalAuth({
@@ -31,31 +33,23 @@ const initWhatsApp = async () => {
       }),
 
       puppeteer: {
-        headless: 'new',
-        executablePath: browserPath,
+        headless: true,
 
-args: [
-  '--no-sandbox',
-  '--disable-setuid-sandbox',
-  '--disable-dev-shm-usage',
-  '--disable-accelerated-2d-canvas',
-  '--no-first-run',
-  '--no-zygote',
-  '--disable-gpu',
-  '--single-process',
-  '--no-remote',
-  '--disable-background-networking',
-  '--disable-background-timer-throttling',
-  '--disable-renderer-backgrounding',
-  '--disable-backgrounding-occluded-windows',
-],
+        executablePath,
+
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+        ],
       },
     });
 
-    // ─────────────────────────────────────────────
-    // EVENTS
-    // ─────────────────────────────────────────────
-
+    // QR EVENT
     client.on('qr', (qr) => {
       latestQr = qr;
 
@@ -72,6 +66,7 @@ args: [
 
     client.on('authenticated', () => {
       latestQr = null;
+
       console.log('🔐 WhatsApp authenticated!');
     });
 
@@ -124,9 +119,6 @@ args: [
   }
 };
 
-/**
- * Send WhatsApp message
- */
 const sendMessage = async (phone, message) => {
   if (!whatsappClient || !isReady) {
     throw new Error('WhatsApp client not ready.');
@@ -148,9 +140,6 @@ const sendMessage = async (phone, message) => {
   }
 };
 
-/**
- * Status
- */
 const getStatus = () => ({
   isReady,
   hasClient: !!whatsappClient,
