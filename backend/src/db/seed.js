@@ -39,7 +39,8 @@ const isFresh = process.argv.includes('--fresh');
   const teacherIds = [];
 
   for (const { name, email, password, role } of TEACHERS) {
-    const existing = db.prepare('SELECT id FROM teachers WHERE email = ?').get(email);
+    const emailNorm = email.toLowerCase().trim();
+    const existing = db.prepare('SELECT id FROM teachers WHERE lower(email) = ?').get(emailNorm);
     if (existing) {
       teacherIds.push(existing.id);
       console.log(`⏭️  Staff already exists: ${name} (${email})`);
@@ -49,7 +50,7 @@ const isFresh = process.argv.includes('--fresh');
     const hash   = bcrypt.hashSync(password, 10);
     const result = db.prepare(
       'INSERT INTO teachers (name, email, password_hash, role) VALUES (?, ?, ?, ?)'
-    ).run(name, email, hash, role);
+    ).run(name, emailNorm, hash, role);
 
     teacherIds.push(result.lastInsertRowid);
     console.log(`👩‍🏫 Staff created: ${name} (${email}) | ID: ${result.lastInsertRowid}`);

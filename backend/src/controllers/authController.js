@@ -10,13 +10,16 @@ const login = (req, res) => {
     return res.status(400).json({ error: 'Email and password are required.' });
   }
 
-  const teacher = db.prepare('SELECT * FROM teachers WHERE email = ?').get(email.toLowerCase().trim());
+  const normalizedEmail = email.toLowerCase().trim();
+  const teacher = db.prepare('SELECT * FROM teachers WHERE lower(email) = ?').get(normalizedEmail);
   if (!teacher) {
+    console.warn(`🔒 Failed login: no user for ${normalizedEmail}`);
     return res.status(401).json({ error: 'Invalid email or password.' });
   }
 
   const isValid = bcrypt.compareSync(password, teacher.password_hash);
   if (!isValid) {
+    console.warn(`🔒 Failed login: invalid password for ${normalizedEmail}`);
     return res.status(401).json({ error: 'Invalid email or password.' });
   }
 
